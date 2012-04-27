@@ -32,7 +32,6 @@ import os
 
 class MentatError(Exception):
     """ TO DO """
-    
     pass
 
 class Mentat(object):
@@ -57,9 +56,9 @@ class Mentat(object):
                 port : 6667
                 nickname : mentatbot
                 botowner : iruan
-                identification : iruan
+                identification : mentatbot
                 password : password
-                realname : Irving
+                realname : Mentat
                 defaultchannel : ##python
         """
         
@@ -127,7 +126,7 @@ class Mentat(object):
                 
                 # Test custom command
                 if (server_message[0] == 'PING'):
-                    s.send('PONG ' + server_message[1] + 'n')
+                    self.__socket.send('PONG ' + server_message[1] + '\n')
                     
     def __parse(self, message):
         complete = message[1:].split(':', 1)
@@ -139,20 +138,20 @@ class Mentat(object):
             # Messages starting with ` are commands
             command = msgpart[1:].split(' ') 
             if command[0] == 'op': 
-                self.__socket.send('MODE ' + info[2] + ' +o ' + command[1] + 'n') 
+                self.__socket.send('MODE ' + info[2] + ' +o ' + command[1] + '\n') 
             if command[0] == 'deop': 
-                self.__socket.send('MODE ' + info[2] + ' -o ' + command[1] + 'n') 
+                self.__socket.send('MODE ' + info[2] + ' -o ' + command[1] + '\n') 
             if command[0] == 'voice': 
-                self.__socket.send('MODE ' + info[2] + ' +v ' + command[1] + 'n') 
+                self.__socket.send('MODE ' + info[2] + ' +v ' + command[1] + '\n') 
             if command[0] == 'devoice': 
-                self.__socket.send('MODE ' + info[2] + ' -v ' + command[1] + 'n') 
+                self.__socket.send('MODE ' + info[2] + ' -v ' + command[1] + '\n') 
             if command[0] == 'sys': 
                 syscmd(msgpart[1:], info[2]) 
 
         if msgpart[0]=='-' and sender[0] == self.botowner:
             # Treat msgs with - as explicit command to send to server 
             command = msgpart[1:] 
-            self.__socket.send(command + 'n') 
+            self.__socket.send(command + '\n') 
             print 'cmd=' + command
             
     host = property(lambda self: self.__host)
@@ -165,13 +164,12 @@ class Mentat(object):
 
 def main():
     
-    bot = Mentat('irc.freenode.net', 6667, 'mentatbot', 'iruan', 'mentatbot', 'weining', 'Irving', '##iruan')
+    bot = Mentat('irc.freenode.net', 6667, 'mentatbot', 'iruan', 'mentatbot', 'password', 'Mentat', '##iruan')
     
     print bot
     
     if (bot.connect()):
         bot.listen()
-        
         bot.disconnect()
     else:
         print "Failed to connect."
