@@ -162,6 +162,10 @@ class Mentat(object):
     realname = property(lambda self: self.__realname)
     defaultchannel = property(lambda self: self.__defaultchannel)
 
+def get_login_credentials(login_file):
+    
+    pass
+
 def main():
     
     bot = Mentat('irc.freenode.net', 6667, 'mentatbot', 'iruan', 'mentatbot', 'password', 'Mentat', '##iruan')
