@@ -90,10 +90,10 @@ class Mentat(object):
             self.__socket = socket.socket()
             self.__socket.connect( (self.host, self.port) )
             self.__socket.send('NICK ' + self.nickname + '\n')
-            self.__socket.send('USER ' + self.identification + ' ' + self.host + ' bla :' + self.realname + '\n') # Identify to the server
+            self.__socket.send('USER ' + self.nickname + ' 0 * :' + self.realname + '\n') # Identify to the server
             
             self.__socket.send('JOIN '+ self.defaultchannel + '\n')
-            sys.stdout.write("\nSuccessfully connected!\n")
+            sys.stdout.write("\nYou have successfully connected!\n\n")
             
             return True
         except socket.error:
@@ -110,7 +110,7 @@ class Mentat(object):
             
     def listen(self):
         """
-            Sits on the server and listens for messages.
+            Sits on the server and listens for incoming messages.
         """
         
         while True: 
@@ -118,41 +118,50 @@ class Mentat(object):
             
             print server_message
             
-            if server_message.find('PRIVMSG') !=- 1:
+            if server_message.find('PRIVMSG') != -1:    
                 self.__parse(server_message) 
-                
-                server_message = server_message.rstrip()
-                server_message = server_message.split() 
-                
-                # Test custom command
-                if (server_message[0] == 'PING'):
-                    self.__socket.send('PONG ' + server_message[1] + '\n')
+            
+    
+    def send_to_channel(self, channel, message):
+        """
+            Socket wrapper method for outputting text in the channel.
+        """
+        
+        self.__socket.send('PRIVMSG ' + channel + " :" + message + '\n')
+
+    def send_to_nickname(self, nickname, message):
+        """
+            Socket wrapper method for outputting text to a specific nickname.
+        """
+        self.__socket.send('PRIVMSG ' + channel + " :" + message + '\n')
                     
     def __parse(self, message):
-        complete = message[1:].split(':', 1)
+        """
+            Strips the message received on the server, NOTICE or PRIVMSG. Checks
+            for commands detected in channel and via private message, and writes
+            to the respective source.
+            
+            Arguments:
+                message : The server message received, with server metadata and
+                    content.            
+        """
         
-        info = complete[0].split(' ') 
-        msgpart = complete[1] 
-        sender = info[0].split('!') 
-        if msgpart[0] == '`' and sender[0] == self.botowner:
-            # Messages starting with ` are commands
-            command = msgpart[1:].split(' ') 
-            if command[0] == 'op': 
-                self.__socket.send('MODE ' + info[2] + ' +o ' + command[1] + '\n') 
-            if command[0] == 'deop': 
-                self.__socket.send('MODE ' + info[2] + ' -o ' + command[1] + '\n') 
-            if command[0] == 'voice': 
-                self.__socket.send('MODE ' + info[2] + ' +v ' + command[1] + '\n') 
-            if command[0] == 'devoice': 
-                self.__socket.send('MODE ' + info[2] + ' -v ' + command[1] + '\n') 
-            if command[0] == 'sys': 
-                syscmd(msgpart[1:], info[2]) 
-
-        if msgpart[0]=='-' and sender[0] == self.botowner:
-            # Treat msgs with - as explicit command to send to server 
-            command = msgpart[1:] 
-            self.__socket.send(command + '\n') 
-            print 'cmd=' + command
+        complete_text = message.rstrip().split(':')[1::]
+        
+        if complete_text[0].find('#') != -1:
+            channel = complete_text[0].rstrip().split(' ')[-1]
+            message = complete_text[1].rstrip().split(' ')
+            
+            command = message[0]
+            
+            print "Channel: " + channel
+            print "Command: " + command
+            print "Message: " + ' '.join(message)
+            
+            # Just mimic command
+            if command[0] == "!":
+                self.send_to_channel(channel, ' '.join(message[1::]))
+                     
             
     host = property(lambda self: self.__host)
     port = property(lambda self: self.__port)
@@ -175,8 +184,7 @@ def get_login_credentials(filepath):
     
     """
     
-    login_data = {}
-    
+    login_data = {} 
     try:
         login_file = open(filepath, "r")
     except IOError as error:
@@ -199,8 +207,7 @@ def main():
     
     if (bot.connect()):
         bot.listen()
-        
-        
+            
     bot.disconnect()
         
 if __name__ == "__main__":
