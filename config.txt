@@ -1,6 +1,7 @@
-host=irc.freenode.net
-port=6667
-nickname=your_bot_nickname
-botowner=your_nickname
-identifcation=your_ident_here
-defaultchannel=##your_default_channel
+host=irc.server.net
+port=1234
+nickname=botnick
+botowner=your_botowner_nick
+identification=your_ident
+password=your_password
+defaultchannel=your_default_channel

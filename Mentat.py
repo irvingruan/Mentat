@@ -162,9 +162,21 @@ class Mentat(object):
     realname = property(lambda self: self.__realname)
     defaultchannel = property(lambda self: self.__defaultchannel)
 
-def get_login_credentials(login_file):
+def get_login_credentials(filepath):
     
-    pass
+    login_data = {}
+    
+    try:
+        login_file = open(filepath)
+    except IOError as error:
+        sys.stderr.write(error.errno + "\n")
+        sys.stderr.write(error + "\n")
+     
+    for line in login_file:
+        credential_data = line.rstrip().split('=')
+        login_data[credential_data[0]] = credential_data[1]
+        
+    return login_data
 
 def main():
     
