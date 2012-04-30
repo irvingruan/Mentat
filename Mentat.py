@@ -163,11 +163,22 @@ class Mentat(object):
     defaultchannel = property(lambda self: self.__defaultchannel)
 
 def get_login_credentials(filepath):
+    """
+        Opens up config.txt to read in user-defined bot login.
+        
+        Arguments:
+            filepath = The filepath of config.txt
+        Returns:
+            A dictionary with login info and values.
+
+            Keys: host, port, nickname, botowner, identification, password, defaultchannel
+    
+    """
     
     login_data = {}
     
     try:
-        login_file = open(filepath)
+        login_file = open(filepath, "r")
     except IOError as error:
         sys.stderr.write(error.errno + "\n")
         sys.stderr.write(error + "\n")
@@ -180,17 +191,18 @@ def get_login_credentials(filepath):
 
 def main():
     
-    bot = Mentat('irc.freenode.net', 6667, 'mentatbot', 'iruan', 'mentatbot', 'password', 'Mentat', '##iruan')
+    login_data = get_login_credentials("config.txt")
+    
+    bot = Mentat(login_data['host'], int(login_data['port']), login_data['nickname'], login_data['botowner'], login_data['identification'], login_data['password'], 'Realname', login_data['defaultchannel'])
     
     print bot
     
     if (bot.connect()):
         bot.listen()
-        bot.disconnect()
-    else:
-        print "Failed to connect."
         
-          
+        
+    bot.disconnect()
+        
 if __name__ == "__main__":
     main()
     sys.exit(0)
