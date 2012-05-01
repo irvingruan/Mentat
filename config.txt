@@ -1,7 +1,0 @@
-host=irc.server.net
-port=1234
-nickname=botnick
-botowner=your_botowner_nick
-identification=your_ident
-password=your_password
-defaultchannel=your_default_channel
