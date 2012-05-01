@@ -1,0 +1,7 @@
+host=irc.freenode.net
+port=6667
+nickname=mentatbot
+botowner=iruan
+identification=mentatbot
+password=weining
+defaultchannel=##iruan
