@@ -38,11 +38,18 @@ class Mentat(object):
     """
         Representation of an IRC bot. Documentation will be added as progress is made.
         
-        Methods:
+        Mentat Connection and Data Transmission Methods:
             connect()
             disconnect()
             listen()
-    
+            send_to_channel()
+            send_to_nickname()
+        
+        Mentat Bot Command Methods:
+            help()
+            ping()
+            join()
+            leave()            
     """
     
     def __init__(self, host, port, nickname, botowner, identification=None, password=None, realname=None, defaultchannel=None):
@@ -72,6 +79,11 @@ class Mentat(object):
         self.__defaultchannel = defaultchannel
         
         self.__socket = 0
+        self.__currentchannel = defaultchannel
+        
+        self.__commands = {'help':self.help, 'ping':self.ping, 'join':self.join_channel, 'leave':self.leave_channel}
+        
+        self.__timer = 0
         
     def __str__(self):
         return '\nMentat : ' + __version__ + '\n\nBot nick: ' + self.nickname + '\nBot owner: ' + self.botowner + '\n\nHost: ' + self.host + '\n'
@@ -112,16 +124,19 @@ class Mentat(object):
         """
             Sits on the server and listens for incoming messages.
         """
+        timer = 0
         
         while True: 
             server_message = self.__socket.recv(500)
-            
             print server_message
+            
+            self.__time()
             
             if server_message.find('PRIVMSG') != -1:    
                 self.__parse(server_message) 
             
-    
+            timer += 1
+            
     def send_to_channel(self, channel, message):
         """
             Socket wrapper method for outputting text in the channel.
@@ -133,8 +148,63 @@ class Mentat(object):
         """
             Socket wrapper method for outputting text to a specific nickname.
         """
+        
         self.__socket.send('PRIVMSG ' + channel + " :" + message + '\n')
-                    
+        
+    def help(self, current_channel):
+        """
+            Displays a list of Mentat commands to the current channel's users.
+        """
+        
+        self.send_to_channel(current_channel, "Mentat " + __version__ + " Commands:\n")
+        self.send_to_channel(current_channel, "\t!ping <target>\n")
+        self.send_to_channel(current_channel, "\t!join <#channel>\n")
+        self.send_to_channel(current_channel, "\t!leave <#channel>\n")
+    
+    def ping(self, current_channel, target):
+        """
+            Test command to make sure Mentat can reponse to a user.
+            
+            Args:
+                current_channel : The current channel when receiving command.
+                target : The message string to respond with PONG.
+        """
+        
+        if len(target) > 0:
+            self.send_to_channel(current_channel, "PONG " + target)
+        
+    def join_channel(self, channel_to_join, current_channel):
+        """
+            Makes Mentat join a channel, while remaining in the current one.
+            
+            Args:
+                channel_to_join : The channel to join, should have # or ## chars
+                current_channel : The current channel when receiving join command
+        """
+        
+        if channel_to_join.find('#') != -1:
+            self.__console("Joining channel " + channel_to_join)
+            self.send_to_channel(current_channel, "Joining channel: " + channel_to_join + " ...")
+            self.__socket.send('JOIN ' + channel_to_join + '\n')
+        else:
+            self.send_to_channel(current_channel, "Invalid channel: " + channel_to_join)
+            
+    def leave_channel(self, channel_to_leave, current_channel):
+        """
+            Makes Mentat leave a channel.
+            
+            Args:
+                current_channel : The current channel when receiving join command
+                channel_to_leave : The channel to leave, should have # or ## chars
+        """
+        
+        if channel_to_leave.find('#') != -1:
+            self.__console("Leaving channel " + channel_to_leave)
+            self.send_to_channel(current_channel, "Leaving channel: " + channel_to_leave + " ...")
+            self.__socket.send('PART ' + channel_to_leave + '\n')
+        else:
+            self.send_to_channel(current_channel, "Invalid channel: " + channel_to_leave)
+                       
     def __parse(self, message):
         """
             Strips the message received on the server, NOTICE or PRIVMSG. Checks
@@ -148,20 +218,48 @@ class Mentat(object):
         
         complete_text = message.rstrip().split(':')[1::]
         
+        # Text from channel, since it has # char prefix
         if complete_text[0].find('#') != -1:
-            channel = complete_text[0].rstrip().split(' ')[-1]
+            user = complete_text[0].rstrip().split('!')[0]
+            current_channel = complete_text[0].rstrip().split(' ')[-1]
             message = complete_text[1].rstrip().split(' ')
             
-            command = message[0]
+            possible_command = message[0]
             
-            print "Channel: " + channel
-            print "Command: " + command
-            print "Message: " + ' '.join(message)
+            self.__console("User = " + user)
+            self.__console("Current Channel = " + current_channel)
+            self.__console("Possible Command = " + possible_command)
+            if len(message) > 1:
+                self.__console("Message = " + message[1])
             
-            # Just mimic command
-            if command[0] == "!":
-                self.send_to_channel(channel, ' '.join(message[1::]))
-                     
+            # Only process commands if it originates from bot owner
+            if user == self.botowner:
+                self.__console("Message read from bot's owner, " + user)
+                if possible_command[0] == "!":
+                    command = possible_command[1::]
+                    if command == "help":
+                        self.commands[command](current_channel)
+                    elif command == "ping":
+                        self.commands[command](current_channel, target=message[1])
+                    elif command == "join":
+                        self.commands[command](message[1], current_channel)
+                    elif command == "leave":
+                        self.commands[command](message[1], current_channel)
+            else:
+                self.send_to_channel(self.currentchannel, user + ": You have insufficient privileges.")
+        else:
+            pass
+            
+    def __time(self):
+        """
+            Queries server for local time.
+        """
+        
+        self.__socket.send("TIME\n")
+    
+    def __console(self, message):
+        sys.stderr.write("Console Output: " + message + "\n")
+                 
             
     host = property(lambda self: self.__host)
     port = property(lambda self: self.__port)
@@ -170,6 +268,8 @@ class Mentat(object):
     identification = property(lambda self: self.__identification)
     realname = property(lambda self: self.__realname)
     defaultchannel = property(lambda self: self.__defaultchannel)
+    currentchannel = property(lambda self: self.__currentchannel)
+    commands = property(lambda self: self.__commands)
 
 def get_login_credentials(filepath):
     """
@@ -199,7 +299,7 @@ def get_login_credentials(filepath):
 
 def main():
     
-    login_data = get_login_credentials("config.txt")
+    login_data = get_login_credentials("login.txt")
     
     bot = Mentat(login_data['host'], int(login_data['port']), login_data['nickname'], login_data['botowner'], login_data['identification'], login_data['password'], 'Realname', login_data['defaultchannel'])
     
