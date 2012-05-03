@@ -46,6 +46,7 @@ Mentat currently supports the following list of basic commands:
 * **!ping \<target\>** — Responds with PONG [target]
 * **!join \<channel\>** — Joins the specified channel
 * **!leave \<channel\>** — Leaves the specified channel
+* **!random** — Generates a random number between 0 and 100 inclusive
 
 ## Legal
 
