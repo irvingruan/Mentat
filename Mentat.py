@@ -43,11 +43,11 @@ is made.
             connect()
             disconnect()
             listen()
-            send_to_channel()
-            send_to_nickname()
+            __send_to_channel()
+            __send_to_nickname()
         
         Mentat Bot Command Methods:
-            help()
+            __help()
             ping()
             join()
             leave()            
@@ -149,29 +149,29 @@ self.realname + '\n') # Identify to the server
             
             timer += 1
             
-    def send_to_channel(self, channel, message):
+    def __send_to_channel(self, channel, message):
         """
             Socket wrapper method for outputting text in the channel.
         """
         
         self.__socket.send('PRIVMSG ' + channel + " :" + message + '\n')
 
-    def send_to_nickname(self, nickname, message):
+    def __send_to_nickname(self, nickname, message):
         """
             Socket wrapper method for outputting text to a specific nickname.
         """
         
         self.__socket.send('PRIVMSG ' + channel + " :" + message + '\n')
         
-    def help(self, current_channel):
+    def __help(self, current_channel):
         """
             Displays a list of Mentat commands to the current channel's users.
         """
         
-        self.send_to_channel(current_channel, "Mentat " + __version__ +" Commands:\n")
-        self.send_to_channel(current_channel, "\t!ping <target>\n")
-        self.send_to_channel(current_channel, "\t!join <#channel>\n")
-        self.send_to_channel(current_channel, "\t!leave <#channel>\n")
+        self.__send_to_channel(current_channel, "Mentat " + __version__ +" Commands:\n")
+        self.__send_to_channel(current_channel, "\t!ping <target>\n")
+        self.__send_to_channel(current_channel, "\t!join <#channel>\n")
+        self.__send_to_channel(current_channel, "\t!leave <#channel>\n")
     
     def ping(self, current_channel, target):
         """
@@ -183,9 +183,9 @@ self.realname + '\n') # Identify to the server
         """
         
         if len(target) > 0:
-            self.send_to_channel(current_channel, "PONG " + target)
+            self.__send_to_channel(current_channel, "PONG " + target)
         
-    def join_channel(self, channel_to_join, current_channel):
+    def __join_channel(self, channel_to_join, current_channel):
         """
             Makes Mentat join a channel, while remaining in the current one.
             
@@ -197,11 +197,11 @@ command
         
         if channel_to_join.find('#') != -1:
             self.__console("Joining channel " + channel_to_join)
-            self.send_to_channel(current_channel, "Joining channel: " + 
+            self.__send_to_channel(current_channel, "Joining channel: " + 
 channel_to_join + " ...")
             self.__socket.send('JOIN ' + channel_to_join + '\n')
         else:
-            self.send_to_channel(current_channel, "Invalid channel: " + 
+            self.__send_to_channel(current_channel, "Invalid channel: " + 
 channel_to_join)
             
     def leave_channel(self, channel_to_leave, current_channel):
@@ -217,14 +217,14 @@ chars
         
         if channel_to_leave.find('#') != -1:
             self.__console("Leaving channel " + channel_to_leave)
-            self.send_to_channel(current_channel, "Leaving channel: " + 
+            self.__send_to_channel(current_channel, "Leaving channel: " + 
 channel_to_leave + " ...")
             self.__socket.send('PART ' + channel_to_leave + '\n')
         else:
-            self.send_to_channel(current_channel, "Invalid channel: " + 
+            self.__send_to_channel(current_channel, "Invalid channel: " + 
 channel_to_leave)
 
-    def random_number(self, current_channel):
+    def __random_number(self, current_channel):
         """
             Generates a random number between 1 and 100 and tells it to the channel.
             Args:
@@ -233,7 +233,7 @@ channel_to_leave)
         if current_channel.find('#') != -1:
             random_number = random.randrange(0,101)
             self.__console("Random number is: " + str(random_number))
-            self.send_to_channel(current_channel, "Random number is: " + str(random_number))
+            self.__send_to_channel(current_channel, "Random number is: " + str(random_number))
                        
     def __parse(self, message):
         """
@@ -279,7 +279,7 @@ target=message[1])
                     elif command == "random":
                         self.commands[command](current_channel)
             else:
-                self.send_to_channel(self.currentchannel, user + ": You have insufficient privileges.")
+                self.__send_to_channel(self.currentchannel, user + ": You have insufficient privileges.")
         else:
             pass
             
